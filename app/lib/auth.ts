@@ -90,7 +90,7 @@ export async function checkPermission(permission: Permission) {
 
 const getEnvVar = (key: string): string | undefined => {
   try {
-    const env = getRequestContext()?.env as Record<string, string | undefined>
+    const env = getRequestContext()?.env as unknown as Record<string, string | undefined>
     if (env && env[key]) return env[key]
   } catch {
     // ignore
