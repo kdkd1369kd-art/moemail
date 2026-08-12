@@ -88,33 +88,50 @@ export async function checkPermission(permission: Permission) {
   return hasPermission(userRoleNames as Role[], permission)
 }
 
+const getEnvVar = (key: string): string | undefined => {
+  try {
+    const env = getRequestContext()?.env as Record<string, string | undefined>
+    if (env && env[key]) return env[key]
+  } catch {
+    // ignore
+  }
+  return process.env[key]
+}
+
 export const {
   handlers: { GET, POST },
   auth,
   signIn,
   signOut
-} = NextAuth(() => ({
-  secret: process.env.AUTH_SECRET,
-  adapter: DrizzleAdapter(createDb(), {
-    usersTable: users,
-    accountsTable: accounts,
-  }),
-  providers: [
-    ...(process.env.AUTH_GITHUB_ID && process.env.AUTH_GITHUB_SECRET ? [
-      GitHub({
-        clientId: process.env.AUTH_GITHUB_ID,
-        clientSecret: process.env.AUTH_GITHUB_SECRET,
-        allowDangerousEmailAccountLinking: true,
-      }),
-    ] : []),
-    ...(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET ? [
-      Google({
-        clientId: process.env.AUTH_GOOGLE_ID,
-        clientSecret: process.env.AUTH_GOOGLE_SECRET,
-        allowDangerousEmailAccountLinking: true,
-      }),
-    ] : []),
-    CredentialsProvider({
+} = NextAuth(() => {
+  const githubId = getEnvVar("AUTH_GITHUB_ID")
+  const githubSecret = getEnvVar("AUTH_GITHUB_SECRET")
+  const googleId = getEnvVar("AUTH_GOOGLE_ID")
+  const googleSecret = getEnvVar("AUTH_GOOGLE_SECRET")
+  const secret = getEnvVar("AUTH_SECRET") || "a148119d238be98d88d9d22e0eccf52e9d89d963b908c839a964eecce97f9b3e"
+
+  return {
+    secret,
+    adapter: DrizzleAdapter(createDb(), {
+      usersTable: users,
+      accountsTable: accounts,
+    }),
+    providers: [
+      ...(githubId && githubSecret ? [
+        GitHub({
+          clientId: githubId,
+          clientSecret: githubSecret,
+          allowDangerousEmailAccountLinking: true,
+        }),
+      ] : []),
+      ...(googleId && googleSecret ? [
+        Google({
+          clientId: googleId,
+          clientSecret: googleSecret,
+          allowDangerousEmailAccountLinking: true,
+        }),
+      ] : []),
+      CredentialsProvider({
       name: "Credentials",
       credentials: {
         username: { label: "用户名", type: "text", placeholder: "请输入用户名" },
