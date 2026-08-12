@@ -112,6 +112,8 @@ export const {
 
   return {
     secret,
+    trustHost: true,
+    basePath: "/api/auth",
     adapter: DrizzleAdapter(createDb(), {
       usersTable: users,
       accountsTable: accounts,
